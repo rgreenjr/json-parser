@@ -1,0 +1,196 @@
+grammar Json
+
+  rule json
+  	object / array
+  end
+
+  rule object
+    space '{' space pair space more_pairs:(',' space pair)* space '}' space {
+      def pairs
+        [pair] + more_pairs.elements.map {|e| e.pair}
+      end
+      def to_s
+        "{\n#{pairs.join(",\n")}\n}"
+      end
+      def to_ruby(env={})
+		pairs.each {|p| p.to_ruby(env)}
+		env
+      end
+    }
+    /
+    space '{' space '}' space {
+      def pairs
+        []
+      end
+      def to_s
+        "{}"
+      end
+      def to_ruby(env={})
+        {}
+      end
+    }
+  end
+  
+  rule pair
+    pair_key:string space ':' space pair_value:value {
+      def key
+        pair_key
+      end
+      def value
+        pair_value
+      end
+      def to_s
+        "#{key} : #{value}"
+      end
+      def to_ruby(env={})
+		env[pair_key.to_ruby] = pair_value.to_ruby
+		env
+      end
+    }
+  end
+  
+  rule array
+    '[' space head:value space tail:(',' space value)* space ']' {
+      def values
+        [head] + tail.elements.map {|e| e.value}
+      end
+      def to_s
+        "[#{values.join(', ')}]"
+      end
+      def to_ruby
+        [head.to_ruby] + tail.elements.map {|e| e.value.to_ruby}
+      end
+    }
+    /
+    space '[' space ']' space {
+      def values
+        []
+      end
+      def to_s
+        "[]"
+      end
+      def to_ruby
+        []
+      end
+    }
+  end
+
+  rule value
+    true / false / null / object / array / string / number
+  end
+
+  rule string
+  	'"' chars:(!'"' char)* '"' {
+	  def to_s
+		chars.elements.map {|e| e.char.to_s}.join
+	  end
+      def to_ruby
+	    to_s
+      end
+    }
+  end
+
+  rule char
+  	unicode_char / escaped_char / regular_char
+  end
+
+  rule regular_char
+	!escape . {
+      def to_s
+	    text_value
+      end
+    }
+  end
+
+  rule escaped_char
+	escape ('"' / '\\' / 'b' / 'f' / 'n' / 'r' / 't') {
+      def to_s
+		eval("\"#{text_value}\"")
+      end
+    }
+  end
+
+  rule unicode_char
+	escape 'u' hex_digit hex_digit hex_digit hex_digit {
+	  def to_s
+	    text_value[2..-1].hex.chr
+	  end
+    }
+  end
+
+  rule hex_digit
+  	[0-9a-fA-F]
+  end
+
+  rule escape
+  	'\\'
+  end
+
+  rule number
+    float / integer
+  end
+
+  rule integer
+   [+-]? [0-9]+ {
+     def to_s
+       text_value
+     end
+     def to_ruby
+  	    text_value.to_i
+     end
+    }
+  end
+
+  rule float
+  	[+-]? ([0-9]* '.')? [0-9]+ ('e' [+-]? [0-9]+)? {
+	  def to_s
+	    text_value
+	  end
+	  def to_ruby
+	    text_value.to_f
+	  end
+    }
+  end
+
+  rule true
+    'true' !non_space {
+      def to_s
+        text_value
+      end
+      def to_ruby
+		true
+      end
+    }
+  end
+
+  rule false
+    'false' !non_space {
+      def to_s
+        text_value
+      end
+      def to_ruby
+		false
+      end
+    }
+  end
+
+  rule null
+    'null' !non_space {
+      def to_s
+        text_value
+      end
+      def to_ruby
+		nil
+      end
+    }
+  end
+
+  rule non_space
+    !space .
+  end
+  
+  rule space
+    [ \t\r\n]*
+  end
+
+end
