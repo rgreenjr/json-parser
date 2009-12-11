@@ -3,7 +3,7 @@ require 'test/unit'
 require 'treetop'
 Treetop.load 'json'
 
-class TestJsonParser < Test::Unit::TestCase
+class JsonParserTest < Test::Unit::TestCase
 
   def setup
     @parser = JsonParser.new
@@ -140,27 +140,27 @@ class TestJsonParser < Test::Unit::TestCase
     assert_equal(Array.new, assert_parse('[]').to_ruby)    
   end
 
-  def test_file1
-    result = assert_parse_file('test_file1.json').to_ruby
+  def test_file11
+    result = assert_parse_file('test/test1.json').to_ruby
     assert_equal("John", result["firstName"])
     assert_equal("New York", result["address"]["city"])
     assert_equal("646 123-4567", result["phoneNumbers"].last)
   end
 
   def test_file2
-    result = assert_parse_file('test_file2.json').to_ruby
+    result = assert_parse_file('test/test2.json').to_ruby
     assert_equal("http://www.example.com/image/481989943", result["Image"]["Thumbnail"]["Url"])
     assert_equal(234, result["Image"]["IDs"][2])
   end
 
   def test_file3
-    result = assert_parse_file('test_file3.json').to_ruby
+    result = assert_parse_file('test/test3.json').to_ruby
     assert_equal("SGML", result["glossary"]["GlossDiv"]["GlossList"]["GlossEntry"]["ID"])
     assert_equal("GML", result["glossary"]["GlossDiv"]["GlossList"]["GlossEntry"]["GlossDef"]["GlossSeeAlso"].first)
   end
 
   def test_file4
-    result = assert_parse_file('test_file4.json').to_ruby
+    result = assert_parse_file('test/test4.json').to_ruby
     assert_equal("on", result["widget"]["debug"])
     assert_equal(500.0, result["widget"]["window"]["height"])
     assert_equal(500.0e1, result["widget"]["window"]["width"])
@@ -168,14 +168,14 @@ class TestJsonParser < Test::Unit::TestCase
   end
 
   def test_file5
-    result = assert_parse_file('test_file5.json').to_ruby
+    result = assert_parse_file('test/test5.json').to_ruby
     assert_equal("cofax", result["web-app"]["servlet"][0]["init-param"]["dataStoreName"])
     assert_equal("/content/admin/remove?cache=pages&id=", result["web-app"]["servlet"][4]["init-param"]["removePageCache"])
   end
 
   def test_print
     text = String.new
-    File.open(File.join(@dir, 'test_file5.json'), 'r') { |f| text = f.read }
+    File.open(File.join(@dir, 'test5.json'), 'r') { |f| text = f.read }
     result = @parser.parse(text)
     puts @parser.terminal_failures.join("\n") unless result
     assert !result.nil?
@@ -189,7 +189,7 @@ class TestJsonParser < Test::Unit::TestCase
       puts @parser.failure_reason
       # p @parser unless result
     end
-    assert !result.nil?
+    assert_not_nil result
     result
   end
 
@@ -200,8 +200,7 @@ class TestJsonParser < Test::Unit::TestCase
   end
 
   def assert_parse_file(file)
-    text = String.new
-    File.open(File.join(@dir, file), 'r') { |f| text = f.read }
+    text = IO.read(file)
     assert_parse(text)
   end
 
