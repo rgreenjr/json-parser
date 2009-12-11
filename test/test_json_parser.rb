@@ -1,8 +1,7 @@
 require 'rubygems'
 require 'test/unit'
 require 'treetop'
-
-Treetop.load(File.expand_path("#{File.dirname(__FILE__)}/../json"))
+Treetop.load 'json'
 
 class TestJsonParser < Test::Unit::TestCase
 
